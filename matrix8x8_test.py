@@ -25,6 +25,9 @@ from PIL import ImageDraw
 
 from Adafruit_LED_Backpack import Matrix8x8
 
+# See the SSD1306 library for more examples of using the Python Imaging Library
+# such as drawing text: https://github.com/adafruit/Adafruit_Python_SSD1306
+
 
 # Create display instance on default I2C address (0x70) and bus number.
 display = Matrix8x8.Matrix8x8()
@@ -47,7 +50,7 @@ for x in range(8):
 		# update the actual display LEDs.
 		display.write_display()
 		# Delay for half a second.
-		time.sleep(0.05)
+		time.sleep(0.02)
 
 # Draw some shapes using the Python Imaging Library.
 
@@ -73,5 +76,8 @@ display.set_image(image)
 # Draw the buffer to the display hardware.
 display.write_display()
 
-# See the SSD1306 library for more examples of using the Python Imaging Library
-# such as drawing text: https://github.com/adafruit/Adafruit_Python_SSD1306
+
+time.sleep(2)
+
+display.clear()
+display.write_display()
