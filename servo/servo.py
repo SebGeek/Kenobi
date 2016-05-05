@@ -16,7 +16,7 @@ class ThreadMoveServo(multiprocessing.Process):
 
         # servod is compiled from ServoBlaster GITHub
         # https://github.com/richardghirst/PiBits/tree/master/ServoBlaster
-        os.system('sudo ./servod')
+        os.system('sudo ./servo/servod')
         
         super(ThreadMoveServo, self).__init__()
     
