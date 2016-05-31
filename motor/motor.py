@@ -28,33 +28,45 @@ class ThreadMotor(multiprocessing.Process):
 
         while self.RqTermination == False:
             ''' read com_queue_RX '''
-            try:
-                com_msg = self.com_queue_RX.get(block=True, timeout=None)
-            except Empty:
-                # No msg received
-                pass
+            com_msg = self.com_queue_RX.get(block=True, timeout=None)
+            if com_msg[0] == "STOP":
+                self.RqTermination = True
+            elif com_msg[0] == "MOTOR_ROLL_MAGNITUDE":
+                (roll, magnitude, angle) = com_msg[1]
+                self.motor_run(roll, magnitude, angle)
             else:
-                if com_msg[0] == "STOP":
-                    self.RqTermination = True
-                elif com_msg[0] == "MOTOR_ROLL_MAGNITUDE":
-                    (roll, magnitude) = com_msg[1]
-                    self.motor_run(roll, magnitude)
-                else:
-                    print "unknown msg"
+                print "unknown msg"
 
         self.raspirobot.set_motors(0, 0, 0, 0)
 
-    def motor_run(self, roll, magnitude):
-        # set both motors going forward at magnitude speed
+    def motor_run(self, roll, magnitude, angle):
+        # SPEED: magnitude is 0 to 1000
         motor_speed = magnitude / 400.
         if motor_speed < 0.1:
             motor_speed = 0.0
         elif motor_speed > 1.0:
             motor_speed = 1.0
-        else:
-            print motor_speed
-        self.raspirobot.set_motors(motor_speed, 0, motor_speed, 0)
+        motor_speed_left = motor_speed_right = motor_speed
 
+        # FORWARD/REVERSE: angle is negative in reverse position, else positive
+        if angle >= 0:
+            direction_left = 0
+            direction_right = 0
+        else:
+            direction_left = 1
+            direction_right = 1
+
+        # DIRECTION: roll is -90 at right, +90 at left
+        if roll > 0:
+            motor_speed_right -= abs(roll / 90.)
+        else:
+            motor_speed_left  -= abs(roll / 90.)
+        if motor_speed_right < 0:
+            motor_speed_right = 0
+        if motor_speed_left < 0:
+            motor_speed_left = 0
+
+        self.raspirobot.set_motors(motor_speed_left, direction_left, motor_speed_right, direction_right)
 
 
 if __name__ == '__main__':

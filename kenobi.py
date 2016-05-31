@@ -48,22 +48,17 @@ if __name__ == '__main__':
 
     while True:
         ''' Bluetooth '''
-        try:
-            com_msg = ThreadBluetooth_com_queue_TX.get(block=True, timeout=None)
-        except Empty:
-            # No msg received
-            pass
+        com_msg = ThreadBluetooth_com_queue_TX.get(block=True, timeout=None)
+
+        if com_msg[0] == "BLUETOOTH_analog_sensor":
+            ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", com_msg[1]))
+        elif com_msg[0] == "BLUETOOTH_end":
+            print "QUIT !!"
+            ThreadMotor_com_queue_RX.put(("STOP", None))
+            ThreadBluetooth_com_queue_RX.put(("STOP", None))
+            break
         else:
-            if com_msg[0] == "BLUETOOTH_analog_sensor":
-                #print "BLUETOOTH_analog_sensor: Roll=", com_msg[1][0], " Magnitude=", com_msg[1][1]
-                ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", (com_msg[1][0], com_msg[1][1])))
-            elif com_msg[0] == "BLUETOOTH_end":
-                print "QUIT !!"
-                ThreadMotor_com_queue_RX.put(("STOP", None))
-                ThreadBluetooth_com_queue_RX.put(("STOP", None))
-                break
-            else:
-                print "unknown msg"
+            print "unknown msg"
 
         # ''' Measure distance '''
         # try:

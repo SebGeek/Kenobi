@@ -84,9 +84,10 @@ class ThreadBluetooth(multiprocessing.Process):
                 pass
             else:
                 #print self.cmd_recv,
-                if " " in self.cmd_recv:
-                    (roll, magnitude) = int(self.cmd_recv.split(" ")[0]), int(self.cmd_recv.split(" ")[1])
-                    self.com_queue_TX.put(("BLUETOOTH_analog_sensor", (roll, magnitude)), block=False)
+                if "ORIENTATION " in self.cmd_recv:
+                    cmd_recv_split = self.cmd_recv.split(" ")
+                    (roll, magnitude, angle) = int(cmd_recv_split[1]), int(cmd_recv_split[2]), int(cmd_recv_split[3])
+                    self.com_queue_TX.put(("BLUETOOTH_analog_sensor", (roll, magnitude, angle)), block=False)
                 elif "END" in self.cmd_recv:
                     self.com_queue_TX.put(("BLUETOOTH_end", None), block=False)
 
