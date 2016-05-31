@@ -43,8 +43,6 @@ class ThreadMoveServo(multiprocessing.Process):
             else:
                 self.val -= 1
             
-            #self.com_queue_TX.put(("FRAME_QUEUE_STATE", True), block=False)
-            
             ''' read com_queue_RX '''
             try:
                 com_msg = self.com_queue_RX.get(block=False, timeout=None)
@@ -61,7 +59,7 @@ class ThreadMoveServo(multiprocessing.Process):
                     print "unknown msg"
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     ThreadMoveServo_com_queue_TX = multiprocessing.Queue()
     ThreadMoveServo_com_queue_TX.cancel_join_thread()
     ThreadMoveServo_com_queue_RX = multiprocessing.Queue()
@@ -71,7 +69,6 @@ if __name__=='__main__':
     ThreadMoveServo.start()
     
     while True:
-        #val = raw_input("value ? (8~92)")
         speed = raw_input("speed ? (in sec - 0 to exit)")
         
         if speed == "0":

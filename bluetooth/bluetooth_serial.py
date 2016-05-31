@@ -4,6 +4,8 @@
 import time
 import serial
 import subprocess
+import multiprocessing
+from Queue import Empty
 
 '''
 sudo apt-get update
@@ -40,6 +42,67 @@ sudo minicom rfcomm0
 
 '''
 
+class ThreadBluetooth(multiprocessing.Process):
+    ''' Create a thread '''
+
+    def __init__(self, com_queue_RX, com_queue_TX):
+        self.com_queue_RX = com_queue_RX
+        self.com_queue_TX = com_queue_TX
+
+        self.RqTermination = False
+
+        cmd = "sudo rfcomm listen hci0 >/dev/null &"
+        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        time.sleep(0.5)
+
+        while True:
+            try:
+                self.serial_link = serial.Serial('/dev/rfcomm0', 115200)  # open first serial port
+                self.serial_link.flush()
+            except:
+                print "no device connected"
+                time.sleep(1)
+            else:
+                print "device connected"
+                self.serial_link.write("hello from Pi\r\n")  # write a string
+
+                self.cmd_recv = ""
+
+                super(ThreadBluetooth, self).__init__()
+                self.start()  # Start the thread by calling run() method
+                break
+
+    def run(self):
+        while self.RqTermination == False:
+            try:
+                self.cmd_recv = self.serial_link.readline()
+            except:
+                print "error in serial read"
+                #break
+                pass
+            else:
+                #print self.cmd_recv,
+                if " " in self.cmd_recv:
+                    (roll, magnitude) = int(self.cmd_recv.split(" ")[0]), int(self.cmd_recv.split(" ")[1])
+                    self.com_queue_TX.put(("BLUETOOTH_analog_sensor", (roll, magnitude)), block=False)
+                elif "END" in self.cmd_recv:
+                    self.com_queue_TX.put(("BLUETOOTH_end", None), block=False)
+
+            time.sleep(0.25)
+
+            ''' read com_queue_RX '''
+            try:
+                com_msg = self.com_queue_RX.get(block=False, timeout=None)
+            except Empty:
+                # No msg received
+                pass
+            else:
+                if com_msg[0] == "STOP":
+                    self.RqTermination = True
+                else:
+                    print "unknown msg"
+
+        self.serial_link.close()  # close port
 
 if __name__ == '__main__':
 
@@ -64,6 +127,6 @@ if __name__ == '__main__':
                 break
             else:
                 print cmd_recv,
-                ser.write("Pi received:" + cmd_recv)  # write a string
+                #ser.write("Pi received:" + cmd_recv)  # write a string
 
         ser.close()  # close port
