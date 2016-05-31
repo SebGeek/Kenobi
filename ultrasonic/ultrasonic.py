@@ -90,7 +90,7 @@ if __name__=='__main__':
 
         ''' read com_queue_TX '''
         try:
-            com_msg = ThreadMeasureDistance_com_queue_TX.get(block=False, timeout=None)
+            com_msg = ThreadMeasureDistance_com_queue_TX.get(block=True, timeout=None)
         except Empty:
             # No msg received
             pass

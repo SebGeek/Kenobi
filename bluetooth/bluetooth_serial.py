@@ -58,18 +58,20 @@ class ThreadBluetooth(multiprocessing.Process):
         while True:
             try:
                 self.serial_link = serial.Serial('/dev/rfcomm0', 115200)  # open first serial port
-                self.serial_link.flush()
             except:
                 print "no device connected"
                 time.sleep(1)
             else:
                 print "device connected"
+                self.serial_link.flushInput()
+                time.sleep(0.1)
+                self.serial_link.flushInput()
+
                 self.serial_link.write("hello from Pi\r\n")  # write a string
 
                 self.cmd_recv = ""
 
                 super(ThreadBluetooth, self).__init__()
-                self.start()  # Start the thread by calling run() method
                 break
 
     def run(self):
@@ -87,8 +89,6 @@ class ThreadBluetooth(multiprocessing.Process):
                     self.com_queue_TX.put(("BLUETOOTH_analog_sensor", (roll, magnitude)), block=False)
                 elif "END" in self.cmd_recv:
                     self.com_queue_TX.put(("BLUETOOTH_end", None), block=False)
-
-            time.sleep(0.25)
 
             ''' read com_queue_RX '''
             try:

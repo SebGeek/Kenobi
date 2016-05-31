@@ -37,17 +37,19 @@ if __name__ == '__main__':
     ThreadBluetooth_com_queue_RX = multiprocessing.Queue()
     ThreadBluetooth_com_queue_RX.cancel_join_thread()
     ThreadBluetooth = ThreadBluetooth(ThreadBluetooth_com_queue_RX, ThreadBluetooth_com_queue_TX)
+    ThreadBluetooth.start()  # Start the thread by calling run() method
 
     ThreadMotor_com_queue_TX = multiprocessing.Queue()
     ThreadMotor_com_queue_TX.cancel_join_thread()
     ThreadMotor_com_queue_RX = multiprocessing.Queue()
     ThreadMotor_com_queue_RX.cancel_join_thread()
     ThreadMotor = ThreadMotor(ThreadMotor_com_queue_RX, ThreadMotor_com_queue_TX)
+    ThreadMotor.start()  # Start the thread by calling run() method
 
     while True:
         ''' Bluetooth '''
         try:
-            com_msg = ThreadBluetooth_com_queue_TX.get(block=False, timeout=None)
+            com_msg = ThreadBluetooth_com_queue_TX.get(block=True, timeout=None)
         except Empty:
             # No msg received
             pass
@@ -59,7 +61,6 @@ if __name__ == '__main__':
                 print "QUIT !!"
                 ThreadMotor_com_queue_RX.put(("STOP", None))
                 ThreadBluetooth_com_queue_RX.put(("STOP", None))
-                time.sleep(1)
                 break
             else:
                 print "unknown msg"

@@ -45,7 +45,7 @@ class ThreadMoveServo(multiprocessing.Process):
             
             ''' read com_queue_RX '''
             try:
-                com_msg = self.com_queue_RX.get(block=False, timeout=None)
+                com_msg = self.com_queue_RX.get(block=True, timeout=None)
             except Empty:
                 # No msg received
                 pass
