@@ -11,11 +11,15 @@ import sys
 #sys.path.append("./servo")
 #from servo import ThreadMoveServo
 
-sys.path.append("./bluetooth")
+sys.path.append("/home/pi/Kenobi/bluetooth")
 from bluetooth_serial import ThreadBluetooth
 
-sys.path.append("./motor")
+sys.path.append("/home/pi/Kenobi/motor")
 from motor import ThreadMotor
+
+sys.path.append("/home/pi/Kenobi/LED")
+import matrix8x8_heartbeat
+
 
 if __name__ == '__main__':
     # ThreadMeasureDistance_com_queue_TX = multiprocessing.Queue()
