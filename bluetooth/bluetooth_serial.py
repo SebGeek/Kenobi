@@ -13,11 +13,6 @@ sudo apt-get upgrade -y
 sudo apt-get dist-upgrade -y
 sudo rpi-update
 
-B8:27:EB:83:9E:E9       raspberrypi3
-00:1D:DF:FE:B0:A9       PHILIPS HTL4110B barre de son
-C0:D9:62:04:84:DF       PC-SEB
-98:D6:F7:71:8C:53       Nexus 4
-
 Pour appairer le téléphone
 sudo bluetoothctl -a
 power on
@@ -28,9 +23,10 @@ scan on
 scan off
 agent on
 default-agent
-pair 98:D6:F7:71:8C:53
-trust 98:D6:F7:71:8C:53
-connect 98:D6:F7:71:8C:53 => il est normal que la connection se fasse puis se deconnecte (2 secondes après) car le téléphone ne trouve pas de Serial Protocol SP sur le Raspberry Pi
+pair XX:XX:XX:XX:XX:XX
+trust XX:XX:XX:XX:XX:XX
+connect XX:XX:XX:XX:XX:XX => il est normal que la connection se fasse puis se deconnecte (2 secondes après)
+                             car le téléphone ne trouve pas de Serial Protocol SP sur le Raspberry Pi
 exit
 
 sudo nano /etc/systemd/system/bluetooth.target.wants/bluetooth.service
