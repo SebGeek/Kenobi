@@ -63,7 +63,8 @@ class ThreadBluetooth(multiprocessing.Process):
                 time.sleep(0.1)
                 self.serial_link.flushInput()
 
-                self.serial_link.write("hello from Pi\r\n")  # write a string
+                self.com_queue_TX.put(("BLUETOOTH_device_connected", None), block=False)
+                self.serial_link.write("Kenobi is ready !\r\n")
 
                 self.cmd_recv = ""
 
@@ -76,16 +77,20 @@ class ThreadBluetooth(multiprocessing.Process):
                 self.cmd_recv = self.serial_link.readline()
             except:
                 print "error in serial read"
-                #break
-                pass
             else:
                 #print self.cmd_recv,
-                if "ORIENTATION " in self.cmd_recv:
+                if "ORIENTATION" in self.cmd_recv:
                     cmd_recv_split = self.cmd_recv.split(" ")
                     (roll, magnitude, angle) = int(cmd_recv_split[1]), int(cmd_recv_split[2]), int(cmd_recv_split[3])
                     self.com_queue_TX.put(("BLUETOOTH_analog_sensor", (roll, magnitude, angle)), block=False)
-                elif "END" in self.cmd_recv:
-                    self.com_queue_TX.put(("BLUETOOTH_end", None), block=False)
+                elif "QUIT" in self.cmd_recv:
+                    self.com_queue_TX.put(("BLUETOOTH_QUIT", None), block=False)
+                elif "SHUTDOWN" in self.cmd_recv:
+                    self.com_queue_TX.put(("BLUETOOTH_SHUTDOWN", None), block=False)
+                elif "AUTO" in self.cmd_recv:
+                    self.com_queue_TX.put(("BLUETOOTH_AUTO", None), block=False)
+                elif "MANUAL" in self.cmd_recv:
+                    self.com_queue_TX.put(("BLUETOOTH_MANUAL", None), block=False)
 
             ''' read com_queue_RX '''
             try:
@@ -96,6 +101,8 @@ class ThreadBluetooth(multiprocessing.Process):
             else:
                 if com_msg[0] == "STOP":
                     self.RqTermination = True
+                elif com_msg[0] == "SEND":
+                    self.serial_link.write(com_msg[1] + "\r\n")
                 else:
                     print "unknown msg"
 
@@ -116,7 +123,7 @@ if __name__ == '__main__':
         ser.write("hello from Pi\r\n")  # write a string
 
         cmd_recv = ""
-        while "END" not in cmd_recv:
+        while "QUIT" not in cmd_recv:
             try:
                 cmd_recv = ser.readline()
             except:

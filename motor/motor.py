@@ -41,7 +41,7 @@ class ThreadMotor(multiprocessing.Process):
 
     def motor_run(self, roll, magnitude, angle):
         # SPEED: magnitude is 0 to 1000
-        motor_speed = magnitude / 400.
+        motor_speed = magnitude / 300.
         if motor_speed < 0.1:
             motor_speed = 0.0
         elif motor_speed > 1.0:
@@ -57,7 +57,7 @@ class ThreadMotor(multiprocessing.Process):
             direction_right = 1
 
         # DIRECTION: roll is -90 at right, +90 at left
-        if roll > 0:
+        if roll < 0:
             motor_speed_right -= abs(roll / 90.)
         else:
             motor_speed_left  -= abs(roll / 90.)
@@ -70,24 +70,26 @@ class ThreadMotor(multiprocessing.Process):
 
 
 if __name__ == '__main__':
-    # rr = RRB3(7.4, 6)  # battery voltage is 7.4V, max voltage for motors is 6.0V
-    #
-    # print rr.get_distance()
-    #
-    # motor_speed = 0.6
-    # rr.set_motors(motor_speed, 0, motor_speed, 0)
-    # time.sleep(2)
+    rr = RRB3(7.4, 6)  # battery voltage is 7.4V, max voltage for motors is 6.0V
+
+    print rr.get_distance()
+
+    motor_speed = 0.6
+    #rr.set_motors(motor_speed, 0, motor_speed, 0)
     #rr.forward(1, motor_speed)
-    #rr.right(0.5, motor_speed)
+    rr.right(0.5, motor_speed)
 
-    ThreadMotor_com_queue_TX = multiprocessing.Queue()
-    ThreadMotor_com_queue_TX.cancel_join_thread()
-    ThreadMotor_com_queue_RX = multiprocessing.Queue()
-    ThreadMotor_com_queue_RX.cancel_join_thread()
-    ThreadMotor = ThreadMotor(ThreadMotor_com_queue_RX, ThreadMotor_com_queue_TX)
+    time.sleep(2)
+    rr.cleanup()
 
-    ThreadMotor.start()  # Start the thread by calling run() method
-    ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", (0, 200)))
-    time.sleep(1)
-    print "QUIT !!"
-    ThreadMotor_com_queue_RX.put(("STOP", None))
+    # ThreadMotor_com_queue_TX = multiprocessing.Queue()
+    # ThreadMotor_com_queue_TX.cancel_join_thread()
+    # ThreadMotor_com_queue_RX = multiprocessing.Queue()
+    # ThreadMotor_com_queue_RX.cancel_join_thread()
+    # ThreadMotor = ThreadMotor(ThreadMotor_com_queue_RX, ThreadMotor_com_queue_TX)
+    #
+    # ThreadMotor.start()  # Start the thread by calling run() method
+    # ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", (0, 200)))
+    # time.sleep(1)
+    # print "QUIT !!"
+    # ThreadMotor_com_queue_RX.put(("STOP", None))

@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import multiprocessing
-import time
-from Queue import Queue, Empty
+import os
 import sys
 
 #sys.path.append("./ultrasonic")
@@ -50,16 +49,34 @@ if __name__ == '__main__':
     ThreadMotor = ThreadMotor(ThreadMotor_com_queue_RX, ThreadMotor_com_queue_TX)
     ThreadMotor.start()  # Start the thread by calling run() method
 
+    mode = ""
     while True:
         ''' Bluetooth '''
         com_msg = ThreadBluetooth_com_queue_TX.get(block=True, timeout=None)
 
-        if com_msg[0] == "BLUETOOTH_analog_sensor":
-            ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", com_msg[1]))
-        elif com_msg[0] == "BLUETOOTH_end":
+        if com_msg[0] == "BLUETOOTH_device_connected":
+            print "device connected"
+        elif com_msg[0] == "BLUETOOTH_AUTO":
+            print "AUTO"
+            mode = "AUTO"
+        elif com_msg[0] == "BLUETOOTH_MANUAL":
+            print "MANUAL"
+            mode = "MANUAL"
+        elif com_msg[0] == "BLUETOOTH_analog_sensor":
+            if mode == "MANUAL":
+                ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", com_msg[1]))
+        elif com_msg[0] == "BLUETOOTH_QUIT":
             print "QUIT !!"
+            ThreadBluetooth_com_queue_RX.put(("SEND", "QUIT !!"))
             ThreadMotor_com_queue_RX.put(("STOP", None))
             ThreadBluetooth_com_queue_RX.put(("STOP", None))
+            break
+        elif com_msg[0] == "BLUETOOTH_SHUTDOWN":
+            print "SHUTDOWN !!"
+            ThreadBluetooth_com_queue_RX.put(("SEND", "SHUTDOWN !!"))
+            ThreadMotor_com_queue_RX.put(("STOP", None))
+            ThreadBluetooth_com_queue_RX.put(("STOP", None))
+            os.system("/usr/bin/sudo /sbin/shutdown -h now")
             break
         else:
             print "unknown msg"
