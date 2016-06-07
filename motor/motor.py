@@ -4,7 +4,6 @@
 import time
 from rrb3 import RRB3
 import multiprocessing
-from Queue import Empty
 
 '''
 https://github.com/simonmonk/raspirobotboard3
@@ -38,6 +37,7 @@ class ThreadMotor(multiprocessing.Process):
                 print "unknown msg"
 
         self.raspirobot.set_motors(0, 0, 0, 0)
+        print "MOTOR end of thread"
 
     def motor_run(self, roll, magnitude, angle):
         # SPEED: magnitude is 0 to 1000

@@ -5,6 +5,7 @@ import time
 import serial
 import subprocess
 import multiprocessing
+import psutil
 from Queue import Empty
 
 '''
@@ -47,49 +48,78 @@ class ThreadBluetooth(multiprocessing.Process):
 
         self.RqTermination = False
 
+        self.connection()
+
+        super(ThreadBluetooth, self).__init__()
+
+    def connection(self):
+        for proc in psutil.process_iter():
+            if ('python' in proc.cmdline()) and ('rpc_server_linux.py' in proc.cmdline()):
+                #proc.kill()
+                #self.debug(True, "Previous execution of rpc_server_linux.py was killed")
+                break
+
+        cmd = "sudo killall rfcomm >/dev/null &"
+        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        time.sleep(0.5)
         cmd = "sudo rfcomm listen hci0 >/dev/null &"
         subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         time.sleep(0.5)
-
+            
         while True:
-            try:
-                self.serial_link = serial.Serial('/dev/rfcomm0', 115200)  # open first serial port
-            except:
-                print "no device connected"
+                try:
+                    self.serial_link = serial.Serial('/dev/rfcomm0', baudrate = 115200) #, timeout = 1)
+                except serial.SerialException:
+                    print "device not connected"
+                else:
+                    print "serial open"
+                    time.sleep(0.2)
+                    try:
+                        self.serial_link.flushInput()
+                        time.sleep(0.1)
+                        self.serial_link.flushInput()
+                    except: #serial.SerialException, IOError:
+                        print "flush error"
+                        self.serial_link.close()
+
+                        cmd = "sudo killall rfcomm >/dev/null &"
+                        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+                        time.sleep(0.5)
+                        cmd = "sudo rfcomm listen hci0 >/dev/null &"
+                        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+                        time.sleep(0.5)
+
+                    else:
+                        self.com_queue_TX.put(("BLUETOOTH_device_connected", None), block=False)
+                        self.serial_link.write("Kenobi is ready !\r\n")
+                        break
+                    
                 time.sleep(1)
-            else:
-                print "device connected"
-                self.serial_link.flushInput()
-                time.sleep(0.1)
-                self.serial_link.flushInput()
-
-                self.com_queue_TX.put(("BLUETOOTH_device_connected", None), block=False)
-                self.serial_link.write("Kenobi is ready !\r\n")
-
-                self.cmd_recv = ""
-
-                super(ThreadBluetooth, self).__init__()
-                break
-
+                
     def run(self):
         while self.RqTermination == False:
             try:
-                self.cmd_recv = self.serial_link.readline()
-            except:
-                print "error in serial read"
+                cmd_recv = self.serial_link.readline()
+            except serial.SerialException:
+                print "device unconnected"
+                self.serial_link.close()
+                self.connection()
+                
+            except serial.SerialTimeoutException:
+                print "timeout: nothing received"
             else:
-                #print self.cmd_recv,
-                if "ORIENTATION" in self.cmd_recv:
-                    cmd_recv_split = self.cmd_recv.split(" ")
+                #print cmd_recv,
+                if "ORIENTATION" in cmd_recv:
+                    cmd_recv_split = cmd_recv.split(" ")
                     (roll, magnitude, angle) = int(cmd_recv_split[1]), int(cmd_recv_split[2]), int(cmd_recv_split[3])
                     self.com_queue_TX.put(("BLUETOOTH_analog_sensor", (roll, magnitude, angle)), block=False)
-                elif "QUIT" in self.cmd_recv:
+                elif "QUIT" in cmd_recv:
                     self.com_queue_TX.put(("BLUETOOTH_QUIT", None), block=False)
-                elif "SHUTDOWN" in self.cmd_recv:
+                elif "SHUTDOWN" in cmd_recv:
                     self.com_queue_TX.put(("BLUETOOTH_SHUTDOWN", None), block=False)
-                elif "AUTO" in self.cmd_recv:
+                elif "AUTO" in cmd_recv:
                     self.com_queue_TX.put(("BLUETOOTH_AUTO", None), block=False)
-                elif "MANUAL" in self.cmd_recv:
+                elif "MANUAL" in cmd_recv:
                     self.com_queue_TX.put(("BLUETOOTH_MANUAL", None), block=False)
 
             ''' read com_queue_RX '''
@@ -107,6 +137,7 @@ class ThreadBluetooth(multiprocessing.Process):
                     print "unknown msg"
 
         self.serial_link.close()  # close port
+        print "BLUETOOTH end of thread"
 
 if __name__ == '__main__':
 
@@ -116,7 +147,7 @@ if __name__ == '__main__':
 
     try:
         ser = serial.Serial('/dev/rfcomm0', 115200)  # open first serial port
-    except:
+    except serial.SerialException:
         print "no device connected"
     else:
         print "device connected"
@@ -126,7 +157,7 @@ if __name__ == '__main__':
         while "QUIT" not in cmd_recv:
             try:
                 cmd_recv = ser.readline()
-            except:
+            except serial.SerialException:
                 print "error in serial read"
                 break
             else:
