@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import multiprocessing
+import threading
 import os
 import sys
 import time
@@ -22,6 +23,28 @@ def close_threads():
     ThreadBluetooth_com_queue_RX.put(("STOP", None))
     ThreadMatrixLED_com_queue_RX.put(("STOP", None))
     ThreadSound_com_queue_RX.put(("STOP", None))
+
+class ThreadModeAuto(threading.Thread):
+    def __init__(self):
+        self.RqTermination = False
+        threading.Thread.__init__(self)
+
+    def run(self):
+        while self.RqTermination == False:
+            ThreadMotor_com_queue_RX.put(("MOTOR_Request_Distance", None))
+            com_msg_distance = ThreadMotor_com_queue_TX.get(block=True, timeout=None)
+            print "Kenobi: distance is", com_msg_distance[1]
+            if com_msg_distance[1] > 20:
+                ThreadMotor_com_queue_RX.put(("MOTOR_FORWARD", 0.5))  # speed
+            else:
+                ThreadSound_com_queue_RX.put(("SOUND_shock", None))
+                ThreadMotor_com_queue_RX.put(("MOTOR_RIGHT", 0.5))
+            time.sleep(0.1)
+
+        print "ThreadModeAuto: end of thread"
+
+    def stop(self):
+        self.RqTermination = True
 
 if __name__ == '__main__':
     ThreadMatrixLED_com_queue_TX = multiprocessing.Queue()
@@ -45,6 +68,7 @@ if __name__ == '__main__':
     ThreadBluetooth = ThreadBluetooth(ThreadBluetooth_com_queue_RX, ThreadBluetooth_com_queue_TX)
     # Block until a connection is established from Android application
     ThreadBluetooth.start()
+
     ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_heart_beat", None))
     ThreadSound_com_queue_RX.put(("SOUND_welcome", None))
     
@@ -62,27 +86,36 @@ if __name__ == '__main__':
         com_msg = ThreadBluetooth_com_queue_TX.get(block=True, timeout=None)
 
         if com_msg[0] == "BLUETOOTH_device_connected":
-            print "device connected"
+            print "Kenobi: device connected"
+
         elif com_msg[0] == "BLUETOOTH_AUTO":
-            print "AUTO"
+            print "Kenobi: AUTO"
             mode = "AUTO"
-            ThreadSound_com_queue_RX.put(("SOUND_shock", None))
+            ThreadModeAuto = ThreadModeAuto()
+            ThreadModeAuto.start()
+
         elif com_msg[0] == "BLUETOOTH_MANUAL":
-            print "MANUAL"
+            print "Kenobi: MANUAL"
             mode = "MANUAL"
+            ThreadModeAuto.stop()
+
         elif com_msg[0] == "BLUETOOTH_analog_sensor":
             if mode == "MANUAL":
                 ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", com_msg[1]))
+
         elif com_msg[0] == "BLUETOOTH_QUIT":
-            print "QUIT !!"
+            print "Kenobi: QUIT !!"
             ThreadBluetooth_com_queue_RX.put(("SEND", "QUIT !!"))
             close_threads()
             break
+
         elif com_msg[0] == "BLUETOOTH_SHUTDOWN":
-            print "SHUTDOWN !!"
+            print "Kenobi: SHUTDOWN !!"
             ThreadBluetooth_com_queue_RX.put(("SEND", "SHUTDOWN !!"))
             close_threads()
             os.system("/usr/bin/sudo /sbin/shutdown -h now")
             break
+
         else:
-            print "unknown msg"
+            print "Kenobi: unknown msg"
+

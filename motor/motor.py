@@ -20,7 +20,6 @@ class ThreadMotor(multiprocessing.Process):
 
         super(ThreadMotor, self).__init__()
 
-
     def run(self):
         # battery voltage is 7.4V, max voltage for motors is 6.0V
         self.raspirobot = RRB3(7.4, 6)  # Do not call from __init__() else the library doesn't work
@@ -33,11 +32,24 @@ class ThreadMotor(multiprocessing.Process):
             elif com_msg[0] == "MOTOR_ROLL_MAGNITUDE":
                 (roll, magnitude, angle) = com_msg[1]
                 self.motor_run(roll, magnitude, angle)
+
+            elif com_msg[0] == "MOTOR_Request_Distance":
+                distance = self.raspirobot.get_distance()
+                self.com_queue_TX.put(("MOTOR_Distance", distance))
+
+            elif com_msg[0] == "MOTOR_FORWARD":
+                motor_speed = com_msg[1]
+                self.raspirobot.forward(0, motor_speed) # 0 means motors run infinitely
+
+            elif com_msg[0] == "MOTOR_RIGHT":
+                motor_speed = com_msg[1]
+                self.raspirobot.left(0, motor_speed) # 0 means motors run infinitely / left because of motor inversion
+
             else:
-                print "unknown msg"
+                print "ThreadMotor: unknown msg"
 
         self.raspirobot.set_motors(0, 0, 0, 0)
-        print "MOTOR end of thread"
+        print "ThreadMotor: end of thread"
 
     def motor_run(self, roll, magnitude, angle):
         # SPEED: magnitude is 0 to 1000
@@ -74,10 +86,10 @@ if __name__ == '__main__':
 
     print rr.get_distance()
 
-    motor_speed = 0.6
-    #rr.set_motors(motor_speed, 0, motor_speed, 0)
-    #rr.forward(1, motor_speed)
-    rr.right(0.5, motor_speed)
+    speed = 0.6
+    #rr.set_motors(speed, 0, speed, 0)
+    #rr.forward(1, speed)
+    rr.right(0.5, speed)
 
     time.sleep(2)
     rr.cleanup()
