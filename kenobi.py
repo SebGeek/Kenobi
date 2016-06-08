@@ -39,6 +39,7 @@ class ThreadModeAuto(threading.Thread):
             else:
                 ThreadSound_com_queue_RX.put(("SOUND_shock", None))
                 ThreadMotor_com_queue_RX.put(("MOTOR_RIGHT", 0.5))
+                time.sleep(1) # pour dégagement de l'obstacle
             time.sleep(0.1)
 
         print "ThreadModeAuto: end of thread"
