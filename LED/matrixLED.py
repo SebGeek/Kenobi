@@ -75,3 +75,6 @@ class ThreadMatrixLED(multiprocessing.Process):
 
         self.display.write_display()
         time.sleep(0.8)
+
+if __name__ == '__main__':
+    pass

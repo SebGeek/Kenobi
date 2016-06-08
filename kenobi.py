@@ -14,10 +14,14 @@ from motor import ThreadMotor
 sys.path.append("/home/pi/Kenobi/LED")
 from matrixLED import ThreadMatrixLED
 
+sys.path.append("/home/pi/Kenobi/sound")
+from sound import ThreadSound
+
 def close_threads():
     ThreadMotor_com_queue_RX.put(("STOP", None))
     ThreadBluetooth_com_queue_RX.put(("STOP", None))
     ThreadMatrixLED_com_queue_RX.put(("STOP", None))
+    ThreadSound_com_queue_RX.put(("STOP", None))
 
 if __name__ == '__main__':
     ThreadMatrixLED_com_queue_TX = multiprocessing.Queue()
@@ -26,7 +30,13 @@ if __name__ == '__main__':
     ThreadMatrixLED_com_queue_RX.cancel_join_thread()
     ThreadMatrixLED = ThreadMatrixLED(ThreadMatrixLED_com_queue_RX, ThreadMatrixLED_com_queue_TX)
     ThreadMatrixLED.start()
-    ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_heart_beat", None))
+
+    ThreadSound_com_queue_TX = multiprocessing.Queue()
+    ThreadSound_com_queue_TX.cancel_join_thread()
+    ThreadSound_com_queue_RX = multiprocessing.Queue()
+    ThreadSound_com_queue_RX.cancel_join_thread()
+    ThreadSound = ThreadSound(ThreadSound_com_queue_RX, ThreadSound_com_queue_TX)
+    ThreadSound.start()
 
     ThreadBluetooth_com_queue_TX = multiprocessing.Queue()
     ThreadBluetooth_com_queue_TX.cancel_join_thread()
@@ -35,7 +45,9 @@ if __name__ == '__main__':
     ThreadBluetooth = ThreadBluetooth(ThreadBluetooth_com_queue_RX, ThreadBluetooth_com_queue_TX)
     # Block until a connection is established from Android application
     ThreadBluetooth.start()
-
+    ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_heart_beat", None))
+    ThreadSound_com_queue_RX.put(("SOUND_welcome", None))
+    
     ThreadMotor_com_queue_TX = multiprocessing.Queue()
     ThreadMotor_com_queue_TX.cancel_join_thread()
     ThreadMotor_com_queue_RX = multiprocessing.Queue()
@@ -54,6 +66,7 @@ if __name__ == '__main__':
         elif com_msg[0] == "BLUETOOTH_AUTO":
             print "AUTO"
             mode = "AUTO"
+            ThreadSound_com_queue_RX.put(("SOUND_shock", None))
         elif com_msg[0] == "BLUETOOTH_MANUAL":
             print "MANUAL"
             mode = "MANUAL"
