@@ -18,7 +18,7 @@ class ThreadMatrixLED(multiprocessing.Process):
         self.display = Matrix8x8.Matrix8x8()
         # Initialize the display. Must be called once before using the display.
         self.display.begin()
-        self.display.clear()
+        self.clear_display()
 
         super(ThreadMatrixLED, self).__init__()
 
@@ -45,7 +45,7 @@ class ThreadMatrixLED(multiprocessing.Process):
                     print "unknown msg"
 
         self.clear_display()
-        print "MATRIXLED end of thread"
+        print "ThreadMatrixLED: end of thread"
 
     def clear_display(self):
         self.display.clear()

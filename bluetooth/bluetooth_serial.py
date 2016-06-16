@@ -137,7 +137,7 @@ class ThreadBluetooth(multiprocessing.Process):
                     print "unknown msg"
 
         self.serial_link.close()  # close port
-        print "BLUETOOTH end of thread"
+        print "ThreadBluetooth: end of thread"
 
 if __name__ == '__main__':
 
