@@ -94,6 +94,9 @@ def change_angle(pwm, angle):
 '''
 
 if __name__ == '__main__':
+
+    from rrb3 import RRB3
+
     '''
     import RPi.GPIO as GPIO
 
@@ -116,6 +119,11 @@ if __name__ == '__main__':
     pwm_horizontal.stop()
     GPIO.cleanup()
     '''
+    raspirobot = RRB3(7.4, 6)  # Do not call from __init__() else the library doesn't work
+    raspirobot.set_oc1(1)
+    raspirobot.set_oc2(1)
+
+    raw_input("wait user")
 
     ThreadMoveServo_com_queue_TX = multiprocessing.Queue()
     ThreadMoveServo_com_queue_TX.cancel_join_thread()
@@ -136,3 +144,5 @@ if __name__ == '__main__':
         
         ThreadMoveServo_com_queue_RX.put(("SERVO_PAN", (int(value), 2.0)))
         ThreadMoveServo_com_queue_RX.put(("SERVO_TILT", (int(value), 2.0)))
+
+    raspirobot.cleanup()

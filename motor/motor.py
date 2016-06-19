@@ -49,6 +49,7 @@ class ThreadMotor(multiprocessing.Process):
                 print "ThreadMotor: unknown msg"
 
         self.raspirobot.set_motors(0, 0, 0, 0)
+        self.raspirobot.cleanup()
         print "ThreadMotor: end of thread"
 
     def motor_run(self, roll, magnitude, angle):
