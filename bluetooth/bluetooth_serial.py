@@ -7,6 +7,8 @@ import subprocess
 import multiprocessing
 import psutil
 from Queue import Empty
+import signal
+import sys
 
 '''
 sudo apt-get update
@@ -48,9 +50,15 @@ class ThreadBluetooth(multiprocessing.Process):
 
         self.RqTermination = False
 
+        signal.signal(signal.SIGINT, self.handler)
+
         self.connection()
 
         super(ThreadBluetooth, self).__init__()
+
+    def handler(self, signum, frame):
+        print 'ThreadBluetooth: Signal handler called with signal', signum
+        sys.exit()
 
     def connection(self):
         for proc in psutil.process_iter():
@@ -70,16 +78,15 @@ class ThreadBluetooth(multiprocessing.Process):
                 try:
                     self.serial_link = serial.Serial('/dev/rfcomm0', baudrate = 115200) #, timeout = 1)
                 except serial.SerialException:
-                    print "device not connected"
+                    print "ThreadBluetooth: device not connected"
                 else:
-                    print "serial open"
                     time.sleep(0.2)
                     try:
                         self.serial_link.flushInput()
                         time.sleep(0.1)
                         self.serial_link.flushInput()
                     except: #serial.SerialException, IOError:
-                        print "flush error"
+                        print "ThreadBluetooth: flush error"
                         self.serial_link.close()
 
                         cmd = "sudo killall rfcomm >/dev/null &"
@@ -101,14 +108,13 @@ class ThreadBluetooth(multiprocessing.Process):
             try:
                 cmd_recv = self.serial_link.readline()
             except serial.SerialException:
-                print "device unconnected"
+                print "ThreadBluetooth: device unconnected"
                 self.serial_link.close()
                 self.connection()
                 
             except serial.SerialTimeoutException:
-                print "timeout: nothing received"
+                print "ThreadBluetooth: timeout: nothing received"
             else:
-                #print cmd_recv,
                 if "ORIENTATION" in cmd_recv:
                     cmd_recv_split = cmd_recv.split(" ")
                     (roll, magnitude, angle) = int(cmd_recv_split[1]), int(cmd_recv_split[2]), int(cmd_recv_split[3])
@@ -134,7 +140,7 @@ class ThreadBluetooth(multiprocessing.Process):
                 elif com_msg[0] == "SEND":
                     self.serial_link.write(com_msg[1] + "\r\n")
                 else:
-                    print "unknown msg"
+                    print "ThreadBluetooth: unknown msg"
 
         self.serial_link.close()  # close port
         print "ThreadBluetooth: end of thread"
@@ -153,15 +159,15 @@ if __name__ == '__main__':
         print "device connected"
         ser.write("hello from Pi\r\n")  # write a string
 
-        cmd_recv = ""
-        while "QUIT" not in cmd_recv:
+        cmd_received = ""
+        while "QUIT" not in cmd_received:
             try:
-                cmd_recv = ser.readline()
+                cmd_received = ser.readline()
             except serial.SerialException:
                 print "error in serial read"
                 break
             else:
-                print cmd_recv,
+                print cmd_received,
                 #ser.write("Pi received:" + cmd_recv)  # write a string
 
         ser.close()  # close port

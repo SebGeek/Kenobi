@@ -60,7 +60,7 @@ def handler(signum, frame):
     close_threads()
     sys.exit(0)
 
-START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION = True
+START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION = False
 
 if __name__ == '__main__':
     ThreadMatrixLED_com_queue_TX = multiprocessing.Queue()
@@ -110,7 +110,8 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, handler)
 
     if START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION == True:
-        ThreadBluetooth_com_queue_TX.put(("BLUETOOTH_AUTO", None), block=False)
+        #ThreadBluetooth_com_queue_TX.put(("BLUETOOTH_AUTO", None), block=False)
+        pass
 
     while True:
         ''' Wait for Bluetooth msg received from Android application'''
