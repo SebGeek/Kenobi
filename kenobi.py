@@ -5,6 +5,7 @@ import threading
 import os
 import sys
 import time
+import signal
 
 sys.path.append("/home/pi/Kenobi/bluetooth")
 from bluetooth_serial import ThreadBluetooth
@@ -22,6 +23,8 @@ sys.path.append("/home/pi/Kenobi/servo")
 from servo import ThreadMoveServo
 
 def close_threads():
+    if ObjThreadModeAuto != None:
+        ObjThreadModeAuto.stop()
     ThreadMotor_com_queue_RX.put(("STOP", None))
     ThreadBluetooth_com_queue_RX.put(("STOP", None))
     ThreadMatrixLED_com_queue_RX.put(("STOP", None))
@@ -36,6 +39,7 @@ class ThreadModeAuto(threading.Thread):
     def run(self):
         while self.RqTermination == False:
             ThreadMotor_com_queue_RX.put(("MOTOR_Request_Distance", None))
+            # Wait for MOTOR_Distance message
             com_msg_distance = ThreadMotor_com_queue_TX.get(block=True, timeout=None)
             #print "Kenobi: distance is", com_msg_distance[1]
             if com_msg_distance[1] > 20:
@@ -50,6 +54,13 @@ class ThreadModeAuto(threading.Thread):
 
     def stop(self):
         self.RqTermination = True
+
+def handler(signum, frame):
+    print 'Signal handler called with signal', signum
+    close_threads()
+    sys.exit(0)
+
+START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION = True
 
 if __name__ == '__main__':
     ThreadMatrixLED_com_queue_TX = multiprocessing.Queue()
@@ -70,9 +81,10 @@ if __name__ == '__main__':
     ThreadBluetooth_com_queue_TX.cancel_join_thread()
     ThreadBluetooth_com_queue_RX = multiprocessing.Queue()
     ThreadBluetooth_com_queue_RX.cancel_join_thread()
-    ObjThreadBluetooth = ThreadBluetooth(ThreadBluetooth_com_queue_RX, ThreadBluetooth_com_queue_TX)
-    # Block until a connection is established from Android application
-    ObjThreadBluetooth.start()
+    if START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION == False:
+        ObjThreadBluetooth = ThreadBluetooth(ThreadBluetooth_com_queue_RX, ThreadBluetooth_com_queue_TX)
+        # Block until a connection is established from Android application
+        ObjThreadBluetooth.start()
 
     ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_heart_beat", None))
     ThreadSound_com_queue_RX.put(("SOUND_welcome", None))
@@ -93,6 +105,12 @@ if __name__ == '__main__':
 
     ObjThreadModeAuto = None
     mode = "NO_MOTOR"
+
+    # Set the signal handler to catch Ctrl-C exception
+    signal.signal(signal.SIGINT, handler)
+
+    if START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION == True:
+        ThreadBluetooth_com_queue_TX.put(("BLUETOOTH_AUTO", None), block=False)
 
     while True:
         ''' Wait for Bluetooth msg received from Android application'''
@@ -144,4 +162,3 @@ if __name__ == '__main__':
 
         else:
             print "Kenobi: unknown msg"
-

@@ -5,6 +5,7 @@ import time
 from Adafruit_LED_Backpack import Matrix8x8
 import multiprocessing
 from Queue import Empty
+import signal
 
 class ThreadMatrixLED(multiprocessing.Process):
     ''' Create a thread '''
@@ -23,7 +24,9 @@ class ThreadMatrixLED(multiprocessing.Process):
         super(ThreadMatrixLED, self).__init__()
 
     def run(self):
+        signal.signal(signal.SIGINT, self.handler)
         function = None
+
         while self.RqTermination == False:
             ''' read com_queue_RX '''
             try:
@@ -75,6 +78,11 @@ class ThreadMatrixLED(multiprocessing.Process):
 
         self.display.write_display()
         time.sleep(0.8)
+
+    def handler(self, signum, frame):
+        print 'ThreadMatrixLED: Signal handler called with signal', signum
+        self.clear_display()
+
 
 if __name__ == '__main__':
     pass

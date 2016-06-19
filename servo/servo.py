@@ -16,7 +16,8 @@ class ThreadMoveServo(multiprocessing.Process):
         # servod is compiled from ServoBlaster GITHub
         # https://github.com/richardghirst/PiBits/tree/master/ServoBlaster
         # servos must be connected on pins 35 (GPIO19) and 36 (GPIO16)
-        os.system('sudo /home/pi/Kenobi/servo/servod --p1pins="35,36" > /dev/null')
+        # Use PCM mode to avoid conflicts with sound playing
+        os.system('sudo /home/pi/Kenobi/servo/servod --pcm --p1pins="35,36" > /dev/null')
         
         super(ThreadMoveServo, self).__init__()
 
@@ -87,38 +88,14 @@ class ThreadMoveServo(multiprocessing.Process):
         self.tilt_angle_target = float(angle)
         self.tilt_angle_increment = (self.tilt_angle_target - self.tilt_angle_current) * (self.period_s / duration_s)
 
-'''
-def change_angle(pwm, angle):
-    dutycycle = ((angle / 180.0) + 1.0) * 5.0
-    pwm.ChangeDutyCycle(dutycycle)
-'''
+    def handler(self, signum, frame):
+        print 'ThreadMoveServo: Signal handler called with signal', signum
+
 
 if __name__ == '__main__':
 
     from rrb3 import RRB3
 
-    '''
-    import RPi.GPIO as GPIO
-
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(16, GPIO.OUT)
-    GPIO.setup(19, GPIO.OUT)
-    # PWM on port GPIO_pin at 50 Hertz (20ms)
-    pwm_vertical = GPIO.PWM(19, 50)
-    pwm_horizontal = GPIO.PWM(16, 50)
-    dutycycle = ((90 / 180.0) + 1.0) * 5.0
-    pwm_vertical.start(dutycycle)
-    pwm_horizontal.start(dutycycle)
-
-    while True:
-        angle = raw_input("pwm_vertical: angle ?")
-        change_angle(pwm_vertical, int(angle))
-        time.sleep(1)
-
-    pwm_vertical.stop()
-    pwm_horizontal.stop()
-    GPIO.cleanup()
-    '''
     raspirobot = RRB3(7.4, 6)  # Do not call from __init__() else the library doesn't work
     raspirobot.set_oc1(1)
     raspirobot.set_oc2(1)

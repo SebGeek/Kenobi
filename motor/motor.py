@@ -4,6 +4,7 @@
 import time
 from rrb3 import RRB3
 import multiprocessing
+import signal
 
 '''
 https://github.com/simonmonk/raspirobotboard3
@@ -21,6 +22,8 @@ class ThreadMotor(multiprocessing.Process):
         super(ThreadMotor, self).__init__()
 
     def run(self):
+        signal.signal(signal.SIGINT, self.handler)
+
         # battery voltage is 7.4V, max voltage for motors is 6.0V
         self.raspirobot = RRB3(7.4, 6)  # Do not call from __init__() else the library doesn't work
 
@@ -80,6 +83,10 @@ class ThreadMotor(multiprocessing.Process):
             motor_speed_left = 0
 
         self.raspirobot.set_motors(motor_speed_left, direction_left, motor_speed_right, direction_right)
+
+    def handler(self, signum, frame):
+        print 'ThreadMotor: Signal handler called with signal', signum
+        self.raspirobot.set_motors(0, 0, 0, 0)
 
 
 if __name__ == '__main__':
