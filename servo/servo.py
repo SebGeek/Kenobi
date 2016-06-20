@@ -35,10 +35,11 @@ class ThreadMoveServo(multiprocessing.Process):
         while self.RqTermination == False:
             # Tilt
             # 0=vertical (tilt)  / 73=down (-90°) / mid=35 (0°) / 1=up (90°)
+            min = 1.0; mid = 40.0; max = 73.0
             if self.tilt_angle_current >= 0:
-                tilt_dutycycle = 35.0 + ( (self.tilt_angle_current / 90.0) * (1.0 - 35.0) )
+                tilt_dutycycle = mid + ( (self.tilt_angle_current / 90.0) * (min - mid) )
             else:
-                tilt_dutycycle = 35.0 + ( (self.tilt_angle_current / 90.0) * (35.0 - 73.0) )
+                tilt_dutycycle = mid + ( (self.tilt_angle_current / 90.0) * (mid - max) )
             os.system("echo 0=" + str(int(tilt_dutycycle)) + "% > /dev/servoblaster")
 
             tilt_angle_delta = self.tilt_angle_target - self.tilt_angle_current
@@ -47,10 +48,11 @@ class ThreadMoveServo(multiprocessing.Process):
 
             # Pan
             # 1=horizontal (pan) / 80=left (-90°) / mid=40 (0°) / 3=right (90°)
+            min = 3.0; mid = 47.0; max = 80.0
             if self.pan_angle_current >= 0:
-                pan_dutycycle = 40.0 + ( (self.pan_angle_current / 90.0) * (3.0 - 40.0) )
+                pan_dutycycle = mid + ( (self.pan_angle_current / 90.0) * (min - mid) )
             else:
-                pan_dutycycle = 40.0 + ( (self.pan_angle_current / 90.0) * (40.0 - 80.0) )
+                pan_dutycycle = mid + ( (self.pan_angle_current / 90.0) * (mid - max) )
             #print "pan_angle_current", self.pan_angle_current, "pan_angle_increment=", self.pan_angle_increment, "pan_angle_target=", self.pan_angle_target
             os.system("echo 1=" + str(int(pan_dutycycle)) + "% > /dev/servoblaster")
 
@@ -98,9 +100,6 @@ if __name__ == '__main__':
 
     raspirobot = RRB3(7.4, 6)  # Do not call from __init__() else the library doesn't work
     raspirobot.set_oc1(1)
-    raspirobot.set_oc2(1)
-
-    raw_input("wait user")
 
     ThreadMoveServo_com_queue_TX = multiprocessing.Queue()
     ThreadMoveServo_com_queue_TX.cancel_join_thread()
@@ -111,15 +110,15 @@ if __name__ == '__main__':
     ThreadMoveServo.start()
     
     while True:
-        value = raw_input("val for angle (-90 to 90°) ?  (0 to exit)")
+        value = raw_input("val for angle (-90 to 90°) ?  (-1 to exit)")
         
-        if value == "0":
+        if value == "-1":
             print "stop request"
             ThreadMoveServo_com_queue_RX.put(("STOP",))
             ThreadMoveServo.join() # Wait until thread terminates
             break
         
-        ThreadMoveServo_com_queue_RX.put(("SERVO_PAN", (int(value), 2.0)))
-        ThreadMoveServo_com_queue_RX.put(("SERVO_TILT", (int(value), 2.0)))
+        #ThreadMoveServo_com_queue_RX.put(("SERVO_PAN", (int(value), 1.0)))
+        ThreadMoveServo_com_queue_RX.put(("SERVO_TILT", (int(value), 1.0)))
 
     raspirobot.cleanup()

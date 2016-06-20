@@ -27,6 +27,10 @@ class ThreadMotor(multiprocessing.Process):
         # battery voltage is 7.4V, max voltage for motors is 6.0V
         self.raspirobot = RRB3(7.4, 6)  # Do not call from __init__() else the library doesn't work
 
+        self.raspirobot.set_motors(0, 0, 0, 0)
+        self.raspirobot.set_oc1(0)
+        self.raspirobot.set_oc2(0)
+
         while self.RqTermination == False:
             ''' read com_queue_RX '''
             com_msg = self.com_queue_RX.get(block=True, timeout=None)
@@ -44,14 +48,29 @@ class ThreadMotor(multiprocessing.Process):
                 motor_speed = com_msg[1]
                 self.raspirobot.forward(0, motor_speed) # 0 means motors run infinitely
 
+            elif com_msg[0] == "MOTOR_BACKWARD":
+                motor_speed = com_msg[1]
+                self.raspirobot.reverse(0, motor_speed) # 0 means motors run infinitely
+
             elif com_msg[0] == "MOTOR_RIGHT":
                 motor_speed = com_msg[1]
-                self.raspirobot.left(0, motor_speed) # 0 means motors run infinitely / left because of motor inversion
+                # left motors turn to go in right direction, allright ?
+                self.raspirobot.left(0, motor_speed) # 0 means motors run infinitely
+
+            elif com_msg[0] == "MOTOR_LEFT":
+                motor_speed = com_msg[1]
+                self.raspirobot.right(0, motor_speed) # 0 means motors run infinitely
+
+            elif com_msg[0] == "MOTOR_OC":
+                on_off = com_msg[1]
+                self.raspirobot.set_oc1(on_off)
 
             else:
                 print "ThreadMotor: unknown msg"
 
         self.raspirobot.set_motors(0, 0, 0, 0)
+        self.raspirobot.set_oc1(0)
+        self.raspirobot.set_oc2(0)
         self.raspirobot.cleanup()
         print "ThreadMotor: end of thread"
 

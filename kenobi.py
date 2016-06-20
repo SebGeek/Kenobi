@@ -60,7 +60,9 @@ def handler(signum, frame):
     close_threads()
     sys.exit(0)
 
-START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION = False
+
+START_WITH_BLUETOOTH_CONNECTION = True
+START_IN_AUTO_MODE = False
 
 if __name__ == '__main__':
     ThreadMatrixLED_com_queue_TX = multiprocessing.Queue()
@@ -81,7 +83,7 @@ if __name__ == '__main__':
     ThreadBluetooth_com_queue_TX.cancel_join_thread()
     ThreadBluetooth_com_queue_RX = multiprocessing.Queue()
     ThreadBluetooth_com_queue_RX.cancel_join_thread()
-    if START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION == False:
+    if START_WITH_BLUETOOTH_CONNECTION == True:
         ObjThreadBluetooth = ThreadBluetooth(ThreadBluetooth_com_queue_RX, ThreadBluetooth_com_queue_TX)
         # Block until a connection is established from Android application
         ObjThreadBluetooth.start()
@@ -109,9 +111,12 @@ if __name__ == '__main__':
     # Set the signal handler to catch Ctrl-C exception
     signal.signal(signal.SIGINT, handler)
 
-    if START_IN_AUTO_WITHOUT_BLUETOOTH_CONNECTION == True:
-        #ThreadBluetooth_com_queue_TX.put(("BLUETOOTH_AUTO", None), block=False)
-        pass
+    if START_IN_AUTO_MODE == True:
+        ThreadBluetooth_com_queue_TX.put(("BLUETOOTH_AUTO", None), block=False)
+
+    OC_on = False
+    pan_angle = 0.0
+    tilt_angle = 0.0
 
     while True:
         ''' Wait for Bluetooth msg received from Android application'''
@@ -119,6 +124,7 @@ if __name__ == '__main__':
 
         if com_msg[0] == "BLUETOOTH_device_connected":
             print "Kenobi: device connected"
+            ThreadBluetooth_com_queue_RX.put(("SEND", "Kenobi is ready !"))
 
         elif com_msg[0] == "BLUETOOTH_AUTO":
             print "Kenobi: AUTO"
@@ -128,7 +134,6 @@ if __name__ == '__main__':
                 ObjThreadModeAuto.start()
 
         elif com_msg[0] == "BLUETOOTH_MANUAL":
-            print "Kenobi: MANUAL"
             if mode == "MANUAL":
                 print "Kenobi: NO_MOTOR"
                 mode = "NO_MOTOR"
@@ -143,10 +148,33 @@ if __name__ == '__main__':
             if mode == "MANUAL":
                 ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", com_msg[1]))
 
-        elif com_msg[0] == "BLUETOOTH_PAN":
-                ThreadMoveServo_com_queue_RX.put(("SERVO_PAN", (int(value), 2.0)))
-        elif com_msg[0] == "BLUETOOTH_TILT":
-                ThreadMoveServo_com_queue_RX.put(("SERVO_TILT", (int(value), 2.0)))
+        elif com_msg[0] == "BLUETOOTH_ON_OFF":
+            OC_on = not(OC_on)
+            ThreadMotor_com_queue_RX.put(("MOTOR_OC", OC_on))
+            pan_angle = 0.0
+            tilt_angle = 0.0
+            ThreadMoveServo_com_queue_RX.put(("SERVO_TILT", (tilt_angle, 2.0)))
+            ThreadMoveServo_com_queue_RX.put(("SERVO_PAN", (pan_angle, 2.0)))
+        elif com_msg[0] == "BLUETOOTH_UP":
+            tilt_angle += 10.0
+            if tilt_angle > 60.0:
+                tilt_angle = 60.0
+            ThreadMoveServo_com_queue_RX.put(("SERVO_TILT", (tilt_angle, 0.2)))
+        elif com_msg[0] == "BLUETOOTH_DOWN":
+            tilt_angle -= 10.0
+            if tilt_angle < -60.0:
+                tilt_angle = -60.0
+            ThreadMoveServo_com_queue_RX.put(("SERVO_TILT", (tilt_angle, 0.2)))
+        elif com_msg[0] == "BLUETOOTH_LEFT":
+            pan_angle -= 10.0
+            if pan_angle < -60.0:
+                pan_angle = -60.0
+            ThreadMoveServo_com_queue_RX.put(("SERVO_PAN", (pan_angle, 0.2)))
+        elif com_msg[0] == "BLUETOOTH_RIGHT":
+            pan_angle += 10.0
+            if pan_angle > 60.0:
+                pan_angle = 60.0
+            ThreadMoveServo_com_queue_RX.put(("SERVO_PAN", (pan_angle, 0.2)))
 
         elif com_msg[0] == "BLUETOOTH_QUIT":
             print "Kenobi: QUIT !!"
