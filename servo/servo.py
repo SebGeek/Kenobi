@@ -5,6 +5,7 @@ import os
 import time
 import multiprocessing
 from Queue import Queue, Empty
+import signal
 
 class ThreadMoveServo(multiprocessing.Process):
     ''' Create a thread '''
@@ -31,6 +32,8 @@ class ThreadMoveServo(multiprocessing.Process):
         self.tilt_angle_increment = 0.0
 
         self.period_s = 0.05
+
+        signal.signal(signal.SIGINT, self.handler)
 
         while self.RqTermination == False:
             # Tilt
@@ -78,7 +81,7 @@ class ThreadMoveServo(multiprocessing.Process):
                     (angle, duration) = com_msg[1]
                     self.tilt_update(angle, duration)
                 else:
-                    print "unknown msg"
+                    print "ThreadMoveServo: unknown msg"
 
         print "ThreadMoveServo: end of thread"
 
