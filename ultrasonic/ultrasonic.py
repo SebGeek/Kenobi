@@ -6,6 +6,8 @@ import time
 import multiprocessing
 from Queue import Queue, Empty
 
+# This library is not used by Kenobi (use the RasPiRobot board, See motor.py)
+
 TRIG = 23 # GPIO number
 ECHO = 24 # GPIO number
 

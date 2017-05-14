@@ -21,9 +21,16 @@ https://console.developers.google.com/apis/api/embeddedassistant.googleapis.com/
 pip install RPi.GPIO
 
 ** Start assistant:
-source ~/env/bin/activate
+source /home/pi/env/bin/activate
 python -m googlesamples.assistant
+OR:
+/home/pi/env/bin/python -m googlesamples.assistant
 
 ** Sources:
 /home/pi/env/lib/python3.4/site-packages/googlesamples/assistant/__main__.py
+
+* AUTOMATIC start-up
+crontab -u pi -e
+@reboot /home/pi/env/bin/python -m googlesamples.assistant
+
 '''
