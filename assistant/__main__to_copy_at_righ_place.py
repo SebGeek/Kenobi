@@ -23,6 +23,9 @@ from google.assistant.embedded.v1alpha1 import embedded_assistant_pb2
 from google.rpc import code_pb2
 from tenacity import retry, stop_after_attempt, retry_if_exception
 
+import RPi.GPIO as GPIO
+import time
+
 from googlesamples.assistant import (
     assistant_helpers,
     audio_helpers,
@@ -214,6 +217,7 @@ class SampleAssistant(object):
 @click.option('--grpc-channel-option', multiple=True, nargs=2,
               metavar='<option> <value>',
               help='Options used to construct gRPC channel')
+              
 def main(api_endpoint, credentials, verbose,
          input_audio_file, output_audio_file,
          audio_sample_rate, audio_sample_width,
@@ -297,6 +301,8 @@ def main(api_endpoint, credentials, verbose,
 
     with SampleAssistant(conversation_stream,
                          grpc_channel, grpc_deadline) as assistant:
+        global wait_for_user_trigger
+        
         # If file arguments are supplied:
         # exit after the first turn of the conversation.
         if input_audio_file or output_audio_file:
@@ -306,15 +312,45 @@ def main(api_endpoint, credentials, verbose,
         # If no file arguments supplied:
         # keep recording voice requests using the microphone
         # and playing back assistant response using the speaker.
-        wait_for_user_trigger = True
         while True:
-            if wait_for_user_trigger:
-                click.pause(info='Press Enter to send a new request...')
+            #if wait_for_user_trigger:
+            #    click.pause(info='Press Enter to send a new request...')
+            print ('Press blue button to send a new request...')
+            wait_for_user_trigger = True
+            while wait_for_user_trigger:
+                time.sleep(0.2)
+
+            GPIO.output(26, True)
             continue_conversation = assistant.converse()
+            GPIO.output(26, False)
+            
             # wait for user trigger if there is no follow-up turn in
             # the conversation.
-            wait_for_user_trigger = not continue_conversation
+            #wait_for_user_trigger = not continue_conversation
 
+def new_request(gpio_number):
+    global wait_for_user_trigger
 
+    print("new request !")
+    wait_for_user_trigger = False
+    
+def shutdown(gpio_number):
+    print("shutdown now !")
+    os.system("sudo shutdown -h now")
+
+def init_button_led():
+    print("configure button and led gpios")
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(20, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Button Blue connected between GND and GPIO#20
+    GPIO.setup(21, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Button Red connected between GND and GPIO#21
+    GPIO.setup(26, GPIO.OUT)                          # LED connected between GND and GPIO#26 through a 440 ohm resistor
+
+    # Add our function to execute when the button pressed event happens
+    GPIO.add_event_detect(20, GPIO.FALLING, callback=new_request, bouncetime=200)
+    GPIO.add_event_detect(21, GPIO.FALLING, callback=shutdown, bouncetime=200)
+    
 if __name__ == '__main__':
+    wait_for_user_trigger = True
+    init_button_led()
     main()

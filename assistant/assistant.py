@@ -26,7 +26,7 @@ python -m googlesamples.assistant
 OR:
 /home/pi/env/bin/python -m googlesamples.assistant
 
-** Sources:
+** Source modified:
 /home/pi/env/lib/python3.4/site-packages/googlesamples/assistant/__main__.py
 
 * AUTOMATIC start-up
