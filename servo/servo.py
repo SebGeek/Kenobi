@@ -18,7 +18,7 @@ class ThreadMoveServo(multiprocessing.Process):
         # https://github.com/richardghirst/PiBits/tree/master/ServoBlaster
         # servos must be connected on pins 35 (GPIO19) and 36 (GPIO16)
         # Use PCM mode to avoid conflicts with sound playing
-        os.system('sudo /home/pi/Kenobi/servo/servod --pcm --p1pins="35,36" > /dev/null')
+        os.system('sudo /home/pi/Kenobi/servo/servod --p1pins="35,36" > /dev/null')
         
         super(ThreadMoveServo, self).__init__()
 
