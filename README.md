@@ -28,5 +28,6 @@ Kenobi robot is developed in Python on a Raspberry Pi 3.
 
 ```
 crontab -u pi -e
-  @reboot python /home/pi/Kenobi/kenobi.py
+# add the line:
+@reboot /home/pi/Kenobi/start_Kenobi.sh
 ```
