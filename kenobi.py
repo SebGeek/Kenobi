@@ -56,7 +56,7 @@ class ThreadModeAuto(threading.Thread):
         self.RqTermination = True
 
 def handler(signum, frame):
-    print 'Signal handler called with signal', signum
+    print 'Signal handler called with signal' + str(signum) + " " + str(frame)
     close_threads()
     sys.exit(0)
 
@@ -129,6 +129,8 @@ if __name__ == '__main__':
         elif com_msg[0] == "BLUETOOTH_AUTO":
             print "Kenobi: AUTO"
             mode = "AUTO"
+            # Stop servo power to avoid camera shaking (PWM is shared between RaspiRobot board and servoblaster)
+            ThreadMotor_com_queue_RX.put(("MOTOR_OC", False))
             if ObjThreadModeAuto == None:
                 ObjThreadModeAuto = ThreadModeAuto()
                 ObjThreadModeAuto.start()
@@ -145,11 +147,13 @@ if __name__ == '__main__':
                 ObjThreadModeAuto = None
 
         elif com_msg[0] == "BLUETOOTH_analog_sensor":
-            if mode == "MANUAL":
+            # User has to stop servos power before being able to move the robot
+            # to avoid camera shaking: PWM is shared between RaspiRobot board and servoblaster
+            if mode == "MANUAL" and OC_on == False:
                 ThreadMotor_com_queue_RX.put(("MOTOR_ROLL_MAGNITUDE", com_msg[1]))
 
         elif com_msg[0] == "BLUETOOTH_ON_OFF":
-            OC_on = not(OC_on)
+            OC_on = not OC_on
             ThreadMotor_com_queue_RX.put(("MOTOR_OC", OC_on))
             pan_angle = 0.0
             tilt_angle = 0.0
