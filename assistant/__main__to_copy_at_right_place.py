@@ -304,7 +304,7 @@ def main(api_endpoint, credentials, verbose,
 
     with SampleAssistant(conversation_stream,
                          grpc_channel, grpc_deadline) as assistant:
-        global wait_for_user_trigger
+        global new_request
         
         # If file arguments are supplied:
         # exit after the first turn of the conversation.
@@ -317,27 +317,30 @@ def main(api_endpoint, credentials, verbose,
         # and playing back assistant response using the speaker.
         while True:
             print ('Press blue button to send a new request...')
-            wait_for_user_trigger = True
-            while wait_for_user_trigger:
-                time.sleep(0.2)
+            new_request = False
+            while new_request == False:
+                GPIO.output(GPIO_LED, False)
+                time.sleep(0.5)
+                if new_request == True:
+                    break
+                GPIO.output(GPIO_LED, True)
+                time.sleep(0.5)
 
             GPIO.output(GPIO_LED, True)
             continue_conversation = assistant.converse()
-            GPIO.output(GPIO_LED, False)
-            
+
             # wait for user trigger if there is no follow-up turn in
             # the conversation.
             #wait_for_user_trigger = not continue_conversation
 
-def blue_button(gpio_number):
-    global wait_for_user_trigger
+def blue_button(_):
+    global new_request
 
-    wait_for_user_trigger = False
+    new_request = True
     
-def red_button(gpio_number):
+def red_button(_):
     GPIO.output(GPIO_LED, False)
     sys.exit()
-    #os.system("sudo shutdown -h now")
 
 def init_button_led():
     print("configure button and led gpios")
@@ -352,6 +355,6 @@ def init_button_led():
     GPIO.add_event_detect(GPIO_RED_BUTTON, GPIO.FALLING, callback=red_button, bouncetime=200)
     
 if __name__ == '__main__':
-    wait_for_user_trigger = True
+    new_request = False
     init_button_led()
     main()

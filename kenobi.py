@@ -22,6 +22,12 @@ from sound import ThreadSound
 sys.path.append("/home/pi/Kenobi/servo")
 from servo import ThreadMoveServo
 
+import RPi.GPIO as GPIO
+
+GPIO_BLUE_BUTTON = 20
+GPIO_RED_BUTTON = 21
+GPIO_LED = 26
+
 def close_threads():
     if ObjThreadModeAuto != None:
         ObjThreadModeAuto.stop()
@@ -60,11 +66,25 @@ def handler(signum, frame):
     close_threads()
     sys.exit(0)
 
+def init_button_led():
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(GPIO_BLUE_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Button Blue connected between GND and GPIO#20
+    GPIO.setup(GPIO_RED_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Button Red connected between GND and GPIO#21
+    GPIO.setup(GPIO_LED, GPIO.OUT)                                  # LED connected between GND and GPIO#26 through a 440 ohm resistor
+    GPIO.output(GPIO_LED, False)
+
+    GPIO.add_event_detect(GPIO_RED_BUTTON, GPIO.FALLING, callback=red_button, bouncetime=200)
+
+def red_button(_):
+    os.system("/usr/bin/sudo /sbin/shutdown -h now")
 
 START_WITH_BLUETOOTH_CONNECTION = True
 START_IN_AUTO_MODE = False
 
 if __name__ == '__main__':
+    init_button_led()
+
     ThreadMatrixLED_com_queue_TX = multiprocessing.Queue()
     ThreadMatrixLED_com_queue_TX.cancel_join_thread()
     ThreadMatrixLED_com_queue_RX = multiprocessing.Queue()
@@ -83,12 +103,14 @@ if __name__ == '__main__':
     ThreadBluetooth_com_queue_TX.cancel_join_thread()
     ThreadBluetooth_com_queue_RX = multiprocessing.Queue()
     ThreadBluetooth_com_queue_RX.cancel_join_thread()
+
+    ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_heart_beat", None))
+
     if START_WITH_BLUETOOTH_CONNECTION == True:
         ObjThreadBluetooth = ThreadBluetooth(ThreadBluetooth_com_queue_RX, ThreadBluetooth_com_queue_TX)
         # Block until a connection is established from Android application
         ObjThreadBluetooth.start()
 
-    ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_heart_beat", None))
     ThreadSound_com_queue_RX.put(("SOUND_welcome", None))
     
     ThreadMotor_com_queue_TX = multiprocessing.Queue()
