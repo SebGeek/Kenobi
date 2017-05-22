@@ -77,14 +77,13 @@ def init_button_led():
     GPIO.add_event_detect(GPIO_RED_BUTTON, GPIO.FALLING, callback=red_button, bouncetime=200)
 
 def red_button(_):
+    ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_clear_display", None))
     os.system("/usr/bin/sudo /sbin/shutdown -h now")
 
 START_WITH_BLUETOOTH_CONNECTION = True
 START_IN_AUTO_MODE = False
 
 if __name__ == '__main__':
-    init_button_led()
-
     ThreadMatrixLED_com_queue_TX = multiprocessing.Queue()
     ThreadMatrixLED_com_queue_TX.cancel_join_thread()
     ThreadMatrixLED_com_queue_RX = multiprocessing.Queue()
@@ -105,6 +104,8 @@ if __name__ == '__main__':
     ThreadBluetooth_com_queue_RX.cancel_join_thread()
 
     ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_heart_beat", None))
+
+    init_button_led()
 
     if START_WITH_BLUETOOTH_CONNECTION == True:
         ObjThreadBluetooth = ThreadBluetooth(ThreadBluetooth_com_queue_RX, ThreadBluetooth_com_queue_TX)
