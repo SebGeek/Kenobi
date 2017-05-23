@@ -12,7 +12,7 @@ pcm.mic {
 pcm.speaker {
   type plug
   slave {
-    pcm "hw:0,0"
+    pcm "hw:1,0"
   }
 }
 

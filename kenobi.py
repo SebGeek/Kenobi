@@ -78,6 +78,7 @@ def init_button_led():
 
 def red_button(_):
     ThreadMatrixLED_com_queue_RX.put(("MATRIXLED_clear_display", None))
+    time.sleep(2)
     os.system("/usr/bin/sudo /sbin/shutdown -h now")
 
 START_WITH_BLUETOOTH_CONNECTION = True

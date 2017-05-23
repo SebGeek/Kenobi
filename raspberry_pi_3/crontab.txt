@@ -21,6 +21,4 @@
 # 
 # m h  dom mon dow   command
 
-#@reboot python /home/pi/Kenobi/kenobi.py
-
-@reboot /home/pi/env/bin/python -m googlesamples.assistant
+@reboot /home/pi/Kenobi/start_Kenobi.sh
