@@ -1,7 +1,4 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
 
-'''
 1. https://developers.google.com/assistant/sdk/prototype/getting-started-pi-python/config-dev-project-and-account
 
 2. https://developers.google.com/assistant/sdk/prototype/getting-started-pi-python/configure-audio
@@ -74,4 +71,4 @@ OR:
 crontab -u pi -e
 @reboot /home/pi/env/bin/python -m googlesamples.assistant
 
-'''
+
