@@ -71,4 +71,7 @@ OR:
 crontab -u pi -e
 @reboot /home/pi/env/bin/python -m googlesamples.assistant
 
+spoken_request_text
 
+volume_percentage = 50% par défaut
+micro volume à augmenter
