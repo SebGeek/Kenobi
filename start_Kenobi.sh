@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-/home/pi/env/bin/python -m googlesamples.assistant
+#/home/pi/env/bin/python -m googlesamples.assistant
 
-python /home/pi/Kenobi/kenobi.py
+python3 /home/pi/Kenobi/kenobi.py

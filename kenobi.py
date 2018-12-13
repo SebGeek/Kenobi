@@ -7,11 +7,11 @@ import sys
 import time
 import signal
 
-sys.path.append("/home/pi/Kenobi/bluetooth")
-from bluetooth_serial import ThreadBluetooth
+#sys.path.append("/home/pi/Kenobi/bluetooth")
+#from bluetooth_serial import ThreadBluetooth
 
-sys.path.append("/home/pi/Kenobi/motor")
-from motor import ThreadMotor
+#sys.path.append("/home/pi/Kenobi/motor")
+#from motor import ThreadMotor
 
 sys.path.append("/home/pi/Kenobi/LED")
 from matrixLED import ThreadMatrixLED
@@ -19,8 +19,8 @@ from matrixLED import ThreadMatrixLED
 sys.path.append("/home/pi/Kenobi/sound")
 from sound import ThreadSound
 
-sys.path.append("/home/pi/Kenobi/servo")
-from servo import ThreadMoveServo
+#sys.path.append("/home/pi/Kenobi/servo")
+#from servo import ThreadMoveServo
 
 import RPi.GPIO as GPIO
 
@@ -31,11 +31,11 @@ GPIO_LED = 26
 def close_threads():
     if ObjThreadModeAuto != None:
         ObjThreadModeAuto.stop()
-    ThreadMotor_com_queue_RX.put(("STOP", None))
-    ThreadBluetooth_com_queue_RX.put(("STOP", None))
+    #ThreadMotor_com_queue_RX.put(("STOP", None))
+    #ThreadBluetooth_com_queue_RX.put(("STOP", None))
     ThreadMatrixLED_com_queue_RX.put(("STOP", None))
     ThreadSound_com_queue_RX.put(("STOP", None))
-    ThreadMoveServo_com_queue_RX.put(("STOP", None))
+    #ThreadMoveServo_com_queue_RX.put(("STOP", None))
 
 class ThreadModeAuto(threading.Thread):
     def __init__(self):
@@ -47,7 +47,7 @@ class ThreadModeAuto(threading.Thread):
             ThreadMotor_com_queue_RX.put(("MOTOR_Request_Distance", None))
             # Wait for MOTOR_Distance message
             com_msg_distance = ThreadMotor_com_queue_TX.get(block=True, timeout=None)
-            #print "Kenobi: distance is", com_msg_distance[1]
+            #print("Kenobi: distance is", com_msg_distance[1])
             if com_msg_distance[1] > 20:
                 ThreadMotor_com_queue_RX.put(("MOTOR_FORWARD", 0.5))  # speed
             else:
@@ -56,13 +56,13 @@ class ThreadModeAuto(threading.Thread):
                 time.sleep(1) # pour dégagement de l'obstacle
             time.sleep(0.1)
 
-        print "ThreadModeAuto: end of thread"
+        print("ThreadModeAuto: end of thread")
 
     def stop(self):
         self.RqTermination = True
 
 def handler(signum, frame):
-    print 'Signal handler called with signal' + str(signum) + " " + str(frame)
+    print('Signal handler called with signal' + str(signum) + " " + str(frame))
     close_threads()
     sys.exit(0)
 
@@ -81,7 +81,7 @@ def red_button(_):
     time.sleep(2)
     os.system("/usr/bin/sudo /sbin/shutdown -h now")
 
-START_WITH_BLUETOOTH_CONNECTION = True
+START_WITH_BLUETOOTH_CONNECTION = False
 START_IN_AUTO_MODE = False
 
 if __name__ == '__main__':
@@ -119,15 +119,15 @@ if __name__ == '__main__':
     ThreadMotor_com_queue_TX.cancel_join_thread()
     ThreadMotor_com_queue_RX = multiprocessing.Queue()
     ThreadMotor_com_queue_RX.cancel_join_thread()
-    ObjThreadMotor = ThreadMotor(ThreadMotor_com_queue_RX, ThreadMotor_com_queue_TX)
-    ObjThreadMotor.start()
+    #ObjThreadMotor = ThreadMotor(ThreadMotor_com_queue_RX, ThreadMotor_com_queue_TX)
+    #ObjThreadMotor.start()
 
     ThreadMoveServo_com_queue_TX = multiprocessing.Queue()
     ThreadMoveServo_com_queue_TX.cancel_join_thread()
     ThreadMoveServo_com_queue_RX = multiprocessing.Queue()
     ThreadMoveServo_com_queue_RX.cancel_join_thread()
-    ObjThreadMoveServo = ThreadMoveServo(ThreadMoveServo_com_queue_RX, ThreadMoveServo_com_queue_TX)
-    ObjThreadMoveServo.start()
+    #ObjThreadMoveServo = ThreadMoveServo(ThreadMoveServo_com_queue_RX, ThreadMoveServo_com_queue_TX)
+    #ObjThreadMoveServo.start()
 
     ObjThreadModeAuto = None
     mode = "NO_MOTOR"
@@ -147,11 +147,11 @@ if __name__ == '__main__':
         com_msg = ThreadBluetooth_com_queue_TX.get(block=True, timeout=None)
 
         if com_msg[0] == "BLUETOOTH_device_connected":
-            print "Kenobi: device connected"
+            print("Kenobi: device connected")
             ThreadBluetooth_com_queue_RX.put(("SEND", "Kenobi is ready !"))
 
         elif com_msg[0] == "BLUETOOTH_AUTO":
-            print "Kenobi: AUTO"
+            print("Kenobi: AUTO")
             mode = "AUTO"
             # Stop servo power to avoid camera shaking (PWM is shared between RaspiRobot board and servoblaster)
             ThreadMotor_com_queue_RX.put(("MOTOR_OC", False))
@@ -161,10 +161,10 @@ if __name__ == '__main__':
 
         elif com_msg[0] == "BLUETOOTH_MANUAL":
             if mode == "MANUAL":
-                print "Kenobi: NO_MOTOR"
+                print("Kenobi: NO_MOTOR")
                 mode = "NO_MOTOR"
             else:
-                print "Kenobi: MANUAL"
+                print("Kenobi: MANUAL")
                 mode = "MANUAL"
             if ObjThreadModeAuto != None:
                 ObjThreadModeAuto.stop()
@@ -205,17 +205,17 @@ if __name__ == '__main__':
             ThreadMoveServo_com_queue_RX.put(("SERVO_PAN", (pan_angle, 0.2)))
 
         elif com_msg[0] == "BLUETOOTH_QUIT":
-            print "Kenobi: QUIT !!"
+            print("Kenobi: QUIT !!")
             ThreadBluetooth_com_queue_RX.put(("SEND", "QUIT !!"))
             close_threads()
             break
 
         elif com_msg[0] == "BLUETOOTH_SHUTDOWN":
-            print "Kenobi: SHUTDOWN !!"
+            print("Kenobi: SHUTDOWN !!")
             ThreadBluetooth_com_queue_RX.put(("SEND", "SHUTDOWN !!"))
             close_threads()
             os.system("/usr/bin/sudo /sbin/shutdown -h now")
             break
 
         else:
-            print "Kenobi: unknown msg"
+            print("Kenobi: unknown msg")
