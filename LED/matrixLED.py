@@ -4,7 +4,7 @@
 import time
 from Adafruit_LED_Backpack import Matrix8x8
 import multiprocessing
-from Queue import Empty
+from queue import Empty
 import signal
 
 class ThreadMatrixLED(multiprocessing.Process):
@@ -45,10 +45,10 @@ class ThreadMatrixLED(multiprocessing.Process):
                 elif com_msg[0] == "MATRIXLED_clear_display":
                     function = self.clear_display
                 else:
-                    print "unknown msg"
+                    print("unknown msg")
 
         self.clear_display()
-        print "ThreadMatrixLED: end of thread"
+        print("ThreadMatrixLED: end of thread")
 
     def clear_display(self):
         self.display.clear()
@@ -80,7 +80,7 @@ class ThreadMatrixLED(multiprocessing.Process):
         time.sleep(0.8)
 
     def handler(self, signum, frame):
-        print 'ThreadMatrixLED: Signal handler called with signal', signum
+        print('ThreadMatrixLED: Signal handler called with signal', signum)
         self.clear_display()
 
 
