@@ -5,6 +5,7 @@ import time
 from rrb3 import RRB3
 import multiprocessing
 import signal
+import syslog
 
 '''
 https://github.com/simonmonk/raspirobotboard3
@@ -29,7 +30,6 @@ class ThreadMotor(multiprocessing.Process):
 
         self.raspirobot.set_motors(0, 0, 0, 0)
         self.raspirobot.set_oc1(0)
-        self.raspirobot.set_oc2(0)
 
         while self.RqTermination == False:
             ''' read com_queue_RX '''
@@ -66,13 +66,12 @@ class ThreadMotor(multiprocessing.Process):
                 self.raspirobot.set_oc1(on_off)
 
             else:
-                print "ThreadMotor: unknown msg"
+                syslog.syslog("ThreadMotor: unknown msg")
 
         self.raspirobot.set_motors(0, 0, 0, 0)
         self.raspirobot.set_oc1(0)
-        self.raspirobot.set_oc2(0)
         self.raspirobot.cleanup()
-        print "ThreadMotor: end of thread"
+        syslog.syslog("ThreadMotor: end of thread")
 
     def motor_run(self, roll, magnitude, angle):
         # SPEED: magnitude is 0 to 1000
@@ -104,14 +103,14 @@ class ThreadMotor(multiprocessing.Process):
         self.raspirobot.set_motors(motor_speed_left, direction_left, motor_speed_right, direction_right)
 
     def handler(self, signum, frame):
-        print 'ThreadMotor: Signal handler called with signal', signum
+        syslog.syslog('ThreadMotor: Signal handler called with signal', signum)
         self.raspirobot.set_motors(0, 0, 0, 0)
 
 
 if __name__ == '__main__':
     rr = RRB3(7.4, 6)  # battery voltage is 7.4V, max voltage for motors is 6.0V
 
-    print rr.get_distance()
+    print(rr.get_distance())
 
     speed = 0.6
     #rr.set_motors(speed, 0, speed, 0)

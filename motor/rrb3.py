@@ -20,7 +20,7 @@ class RRB3:
     LED2_PIN = 7
     OC1_PIN = 22
     OC2_PIN = 27
-    OC2_PIN_R1 = 21
+    OC2_PIN_R1 = 21 # not used
     OC2_PIN_R2 = 27
     TRIGGER_PIN = 18
     ECHO_PIN = 23
