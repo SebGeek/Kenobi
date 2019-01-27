@@ -57,7 +57,6 @@ if __name__ == '__main__':
     pygame.mixer.init()
 
     file_list = glob.glob("/home/pi/Kenobi/sound/R2D2/*.mp3")
-    file_list = glob.glob("/home/pi/Kenobi/sound/*.ogg")
     for filepath in file_list:
         pygame.mixer.music.load(filepath)
         syslog.syslog("playing", filepath)
